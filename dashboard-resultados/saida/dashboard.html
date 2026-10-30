@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Resultados</title>
+<style>
+:root {
+  color-scheme: light;
+  --pagina: #f9f9f7; --superficie: #fcfcfb; --borda: rgba(11,11,11,0.10);
+  --texto: #0b0b0b; --texto-2: #52514e; --texto-suave: #898781;
+  --grade: #e1e0d9; --eixo: #c3c2b7; --serie: #2a78d6; --referencia: #52514e;
+  --bom: #006300; --ruim: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --pagina: #0d0d0d; --superficie: #1a1a19; --borda: rgba(255,255,255,0.10);
+    --texto: #f0efec; --texto-2: #c3c2b7; --texto-suave: #898781;
+    --grade: #2c2c2a; --eixo: #383835; --serie: #3987e5; --referencia: #c3c2b7;
+    --bom: #0ca30c; --ruim: #e66767;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --pagina: #0d0d0d; --superficie: #1a1a19; --borda: rgba(255,255,255,0.10);
+  --texto: #f0efec; --texto-2: #c3c2b7; --texto-suave: #898781;
+  --grade: #2c2c2a; --eixo: #383835; --serie: #3987e5; --referencia: #c3c2b7;
+  --bom: #0ca30c; --ruim: #e66767;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--pagina); color: var(--texto);
+       font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 48px; }
+h1 { font-size: 26px; margin: 0; }
+h2 { font-size: 18px; margin: 40px 0 4px; }
+h3 { font-size: 15px; margin: 0; }
+.sub { color: var(--texto-2); margin: 4px 0 16px; }
+.cartao { background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; padding: 20px; }
+.numeros { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.numeros .destaque { grid-column: 1 / -1; }
+.indicador .rotulo { color: var(--texto-2); font-size: 13px; }
+.indicador .valor { font-size: 24px; font-weight: 600; margin: 2px 0; }
+.indicador.destaque .valor { font-size: 48px; line-height: 1.1; }
+.variacao { font-size: 13px; color: var(--texto-2); }
+.variacao.bom { color: var(--bom); } .variacao.ruim { color: var(--ruim); }
+.decisoes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            padding: 0; margin: 0; list-style: none; counter-reset: decisao; }
+.decisoes li { counter-increment: decisao; }
+.decisoes h3::before { content: counter(decisao) ". "; color: var(--texto-suave); }
+.decisoes p { margin: 8px 0 0; font-size: 14px; color: var(--texto-2); }
+.decisoes strong { color: var(--texto); }
+.graficos { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); }
+.graficos .sub { font-size: 13px; margin-bottom: 8px; }
+svg { width: 100%; height: auto; display: block; overflow: visible; }
+svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; }
+.eixo { fill: var(--texto-suave); font-variant-numeric: tabular-nums; }
+.rotulo { fill: var(--texto-2); font-size: 12px; }
+.valor { fill: var(--texto); font-weight: 600; paint-order: stroke; stroke: var(--superficie); stroke-width: 4px; }
+.grade { stroke: var(--grade); stroke-width: 1; }
+.base { stroke: var(--eixo); stroke-width: 1; }
+.referencia { stroke: var(--referencia); stroke-width: 1.5; }
+.marca { fill: var(--serie); }
+.alvo:hover .marca { opacity: 0.75; }
+.area-alvo { fill: transparent; }
+.linha { fill: none; stroke: var(--serie); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.area { fill: var(--serie); opacity: 0.1; }
+.ponto { fill: var(--serie); stroke: var(--superficie); stroke-width: 2; }
+.guia { stroke: var(--eixo); stroke-width: 1; }
+details { margin-top: 8px; font-size: 13px; }
+summary { cursor: pointer; color: var(--texto-2); }
+table { border-collapse: collapse; margin-top: 8px; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--grade); }
+td + td, th + th { text-align: right; }
+#dica { position: fixed; pointer-events: none; background: var(--superficie); color: var(--texto);
+        border: 1px solid var(--borda); border-radius: 8px; padding: 6px 10px; font-size: 13px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12); white-space: pre-line; z-index: 10; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+footer { margin-top: 40px; color: var(--texto-suave); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Painel de Resultados · Rangô</h1>
+  <p class="sub">5.728 pedidos de 01/07/2026 a 30/09/2026 · dados fictícios</p>
+
+  <h2>Setembro em números</h2>
+  <p class="sub">Comparação com agosto. Verde: melhorou; vermelho: piorou.</p>
+  <div class="numeros"><div class="cartao indicador destaque"><div class="rotulo">Faturamento</div><div class="valor">R$ 96.386,00</div><div class="variacao bom" title="melhorou">▲ 3,3% vs agosto <span class="sr">(melhorou)</span></div></div><div class="cartao indicador"><div class="rotulo">Pedidos</div><div class="valor">1.982</div><div class="variacao bom" title="melhorou">▲ 0,4% vs agosto <span class="sr">(melhorou)</span></div></div><div class="cartao indicador"><div class="rotulo">Ticket médio</div><div class="valor">R$ 51,30</div><div class="variacao bom" title="melhorou">▲ 2,7% vs agosto <span class="sr">(melhorou)</span></div></div><div class="cartao indicador"><div class="rotulo">Tempo médio de entrega</div><div class="valor">39,0 min</div><div class="variacao bom" title="melhorou">▼ 0,1 min vs agosto <span class="sr">(melhorou)</span></div></div><div class="cartao indicador"><div class="rotulo">Entregas acima de 45 min</div><div class="valor">25,9%</div><div class="variacao bom" title="melhorou">▼ 0,9 p.p. vs agosto <span class="sr">(melhorou)</span></div></div><div class="cartao indicador"><div class="rotulo">Nota média</div><div class="valor">4,16</div><div class="variacao bom" title="melhorou">▲ 0,02 vs agosto <span class="sr">(melhorou)</span></div></div><div class="cartao indicador"><div class="rotulo">Cancelamentos</div><div class="valor">5,2%</div><div class="variacao bom" title="melhorou">▼ 0,1 p.p. vs agosto <span class="sr">(melhorou)</span></div></div></div>
+
+  <h2>Decisões recomendadas</h2>
+  <p class="sub">Geradas automaticamente a partir dos dados do período todo.</p>
+  <ol class="decisoes"><li class="cartao"><h3>Reforçar a operação das 19h às 22h</h3><p><strong>O que os dados mostram:</strong> 43% dos pedidos do dia acontecem nessas 3 horas, e a entrega leva em média 44 min, contra 36 min no resto do dia.</p><p><strong>Decisão sugerida:</strong> Escalar mais entregadores nesse horário e avisar os restaurantes parceiros para reforçar a cozinha antes do pico.</p></li><li class="cartao"><h3>Atacar os atrasos em Alto da Serra</h3><p><strong>O que os dados mostram:</strong> Alto da Serra tem entrega média de 53 min, 79% dos pedidos atrasados e 13,3% cancelados. No bairro mais rápido (Centro), são 32 min e 2,6% cancelados.</p><p><strong>Decisão sugerida:</strong> Trazer restaurantes parceiros mais próximos de Alto da Serra e mostrar uma previsão de entrega realista no app, para o cliente não desistir no meio da espera.</p></li><li class="cartao"><h3>Tratar a pontualidade como prioridade</h3><p><strong>O que os dados mostram:</strong> Pedidos entregues em até 45 min recebem nota média 4,3; os atrasados, 3,7.</p><p><strong>Decisão sugerida:</strong> Enviar um cupom automático quando a entrega passar de 45 min, para recuperar a experiência do cliente, e acompanhar a meta de atraso toda semana.</p></li><li class="cartao"><h3>Criar uma campanha para a terça</h3><p><strong>O que os dados mostram:</strong> A terça tem em média 40 pedidos, 36% abaixo da média da semana (62 pedidos por dia).</p><p><strong>Decisão sugerida:</strong> Oferecer cupons ou frete grátis às terças para ocupar entregadores e restaurantes que ficam ociosos nesse dia.</p></li><li class="cartao"><h3>Dar destaque para Pizza</h3><p><strong>O que os dados mostram:</strong> Pizza gera 29% do faturamento, com ticket médio de R$ 68,68.</p><p><strong>Decisão sugerida:</strong> Colocar restaurantes de Pizza em destaque na tela inicial nos horários de pico e negociar combos com os parceiros dessa categoria.</p></li></ol>
+
+  <h2>Análise do período</h2>
+  <p class="sub">Passe o mouse nos gráficos para ver os valores, ou abra a tabela de cada um.</p>
+  <div class="graficos"><section class="cartao"><h3>Faturamento por semana</h3><p class="sub">Semanas de segunda a domingo, só pedidos entregues</p><svg viewBox="0 0 640 260" role="img" aria-label="Faturamento semanal em reais"><line x1="52" x2="624" y1="232.0" y2="232.0" class="base"/><text x="44.0" y="236.0" class="eixo" text-anchor="end">0</text><line x1="52" x2="624" y1="162.7" y2="162.7" class="grade"/><text x="44.0" y="166.7" class="eixo" text-anchor="end">10 mil</text><line x1="52" x2="624" y1="93.3" y2="93.3" class="grade"/><text x="44.0" y="97.3" class="eixo" text-anchor="end">20 mil</text><line x1="52" x2="624" y1="24.0" y2="24.0" class="grade"/><text x="44.0" y="28.0" class="eixo" text-anchor="end">30 mil</text><polygon points="52,232 52.0,107.2 104.0,101.1 156.0,95.4 208.0,90.6 260.0,90.4 312.0,82.7 364.0,89.3 416.0,88.1 468.0,82.1 520.0,65.8 572.0,78.5 624.0,77.2 624,232" class="area"/><polyline points="52.0,107.2 104.0,101.1 156.0,95.4 208.0,90.6 260.0,90.4 312.0,82.7 364.0,89.3 416.0,88.1 468.0,82.1 520.0,65.8 572.0,78.5 624.0,77.2" class="linha"/><text x="52.0" y="250.0" class="eixo" text-anchor="middle">06/07</text><text x="104.0" y="250.0" class="eixo" text-anchor="middle">13/07</text><text x="156.0" y="250.0" class="eixo" text-anchor="middle">20/07</text><text x="208.0" y="250.0" class="eixo" text-anchor="middle">27/07</text><text x="260.0" y="250.0" class="eixo" text-anchor="middle">03/08</text><text x="312.0" y="250.0" class="eixo" text-anchor="middle">10/08</text><text x="364.0" y="250.0" class="eixo" text-anchor="middle">17/08</text><text x="416.0" y="250.0" class="eixo" text-anchor="middle">24/08</text><text x="468.0" y="250.0" class="eixo" text-anchor="middle">31/08</text><text x="520.0" y="250.0" class="eixo" text-anchor="middle">07/09</text><text x="572.0" y="250.0" class="eixo" text-anchor="middle">14/09</text><text x="624.0" y="250.0" class="eixo" text-anchor="middle">21/09</text><circle cx="624.0" cy="77.2" r="4" class="ponto"/><text x="624.0" y="65.2" class="valor" text-anchor="end">22,3 mil</text><line class="guia" y1="24" y2="232" x1="0" x2="0" visibility="hidden"/><circle class="ponto ponto-guia" r="4" visibility="hidden"/><rect x="26.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 06/07
+R$ 18.006,33" data-x="52.0" data-y="107.2"/><rect x="78.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 13/07
+R$ 18.874,89" data-x="104.0" data-y="101.1"/><rect x="130.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 20/07
+R$ 19.699,01" data-x="156.0" data-y="95.4"/><rect x="182.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 27/07
+R$ 20.390,86" data-x="208.0" data-y="90.6"/><rect x="234.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 03/08
+R$ 20.425,31" data-x="260.0" data-y="90.4"/><rect x="286.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 10/08
+R$ 21.538,20" data-x="312.0" data-y="82.7"/><rect x="338.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 17/08
+R$ 20.587,55" data-x="364.0" data-y="89.3"/><rect x="390.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 24/08
+R$ 20.748,64" data-x="416.0" data-y="88.1"/><rect x="442.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 31/08
+R$ 21.616,39" data-x="468.0" data-y="82.1"/><rect x="494.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 07/09
+R$ 23.968,88" data-x="520.0" data-y="65.8"/><rect x="546.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 14/09
+R$ 22.139,55" data-x="572.0" data-y="78.5"/><rect x="598.0" y="24" width="52.0" height="208" class="area-alvo alvo-linha" data-dica="Semana de 21/09
+R$ 22.320,48" data-x="624.0" data-y="77.2"/></svg><details><summary>Ver tabela</summary><table><tr><th>Semana</th><th>Faturamento</th></tr><tr><td>06/07</td><td>R$ 18.006,33</td></tr><tr><td>13/07</td><td>R$ 18.874,89</td></tr><tr><td>20/07</td><td>R$ 19.699,01</td></tr><tr><td>27/07</td><td>R$ 20.390,86</td></tr><tr><td>03/08</td><td>R$ 20.425,31</td></tr><tr><td>10/08</td><td>R$ 21.538,20</td></tr><tr><td>17/08</td><td>R$ 20.587,55</td></tr><tr><td>24/08</td><td>R$ 20.748,64</td></tr><tr><td>31/08</td><td>R$ 21.616,39</td></tr><tr><td>07/09</td><td>R$ 23.968,88</td></tr><tr><td>14/09</td><td>R$ 22.139,55</td></tr><tr><td>21/09</td><td>R$ 22.320,48</td></tr></table></details></section><section class="cartao"><h3>Pedidos por horário</h3><p class="sub">Média de pedidos por dia em cada hora</p><svg viewBox="0 0 640 260" role="img" aria-label="Média de pedidos por hora do dia"><line x1="52" x2="632" y1="232.0" y2="232.0" class="base"/><text x="44.0" y="236.0" class="eixo" text-anchor="end">0</text><line x1="52" x2="632" y1="162.7" y2="162.7" class="grade"/><text x="44.0" y="166.7" class="eixo" text-anchor="end">5</text><line x1="52" x2="632" y1="93.3" y2="93.3" class="grade"/><text x="44.0" y="97.3" class="eixo" text-anchor="end">10</text><line x1="52" x2="632" y1="24.0" y2="24.0" class="grade"/><text x="44.0" y="28.0" class="eixo" text-anchor="end">15</text><g class="alvo" data-dica="10h às 11h
+1,0 pedidos por dia"><rect x="52.0" y="24" width="41.4" height="208" class="area-alvo"/><path d="M60.7,232.0V222.7Q60.7,218.7 64.7,218.7H80.7Q84.7,218.7 84.7,222.7V232.0Z" class="marca"/></g><text x="72.7" y="250.0" class="eixo" text-anchor="middle">10h</text><g class="alvo" data-dica="11h às 12h
+3,3 pedidos por dia"><rect x="93.4" y="24" width="41.4" height="208" class="area-alvo"/><path d="M102.1,232.0V189.7Q102.1,185.7 106.1,185.7H122.1Q126.1,185.7 126.1,189.7V232.0Z" class="marca"/></g><text x="114.1" y="250.0" class="eixo" text-anchor="middle">11h</text><g class="alvo" data-dica="12h às 13h
+7,5 pedidos por dia"><rect x="134.9" y="24" width="41.4" height="208" class="area-alvo"/><path d="M143.6,232.0V131.4Q143.6,127.4 147.6,127.4H163.6Q167.6,127.4 167.6,131.4V232.0Z" class="marca"/></g><text x="155.6" y="250.0" class="eixo" text-anchor="middle">12h</text><g class="alvo" data-dica="13h às 14h
+5,8 pedidos por dia"><rect x="176.3" y="24" width="41.4" height="208" class="area-alvo"/><path d="M185.0,232.0V156.1Q185.0,152.1 189.0,152.1H205.0Q209.0,152.1 209.0,156.1V232.0Z" class="marca"/></g><text x="197.0" y="250.0" class="eixo" text-anchor="middle">13h</text><g class="alvo" data-dica="14h às 15h
+2,6 pedidos por dia"><rect x="217.7" y="24" width="41.4" height="208" class="area-alvo"/><path d="M226.4,232.0V200.6Q226.4,196.6 230.4,196.6H246.4Q250.4,196.6 250.4,200.6V232.0Z" class="marca"/></g><text x="238.4" y="250.0" class="eixo" text-anchor="middle">14h</text><g class="alvo" data-dica="15h às 16h
+1,8 pedidos por dia"><rect x="259.1" y="24" width="41.4" height="208" class="area-alvo"/><path d="M267.9,232.0V211.6Q267.9,207.6 271.9,207.6H287.9Q291.9,207.6 291.9,211.6V232.0Z" class="marca"/></g><text x="279.9" y="250.0" class="eixo" text-anchor="middle">15h</text><g class="alvo" data-dica="16h às 17h
+1,5 pedidos por dia"><rect x="300.6" y="24" width="41.4" height="208" class="area-alvo"/><path d="M309.3,232.0V215.4Q309.3,211.4 313.3,211.4H329.3Q333.3,211.4 333.3,215.4V232.0Z" class="marca"/></g><text x="321.3" y="250.0" class="eixo" text-anchor="middle">16h</text><g class="alvo" data-dica="17h às 18h
+2,6 pedidos por dia"><rect x="342.0" y="24" width="41.4" height="208" class="area-alvo"/><path d="M350.7,232.0V200.4Q350.7,196.4 354.7,196.4H370.7Q374.7,196.4 374.7,200.4V232.0Z" class="marca"/></g><text x="362.7" y="250.0" class="eixo" text-anchor="middle">17h</text><g class="alvo" data-dica="18h às 19h
+4,7 pedidos por dia"><rect x="383.4" y="24" width="41.4" height="208" class="area-alvo"/><path d="M392.1,232.0V170.9Q392.1,166.9 396.1,166.9H412.1Q416.1,166.9 416.1,170.9V232.0Z" class="marca"/></g><text x="404.1" y="250.0" class="eixo" text-anchor="middle">18h</text><g class="alvo" data-dica="19h às 20h
+9,1 pedidos por dia"><rect x="424.9" y="24" width="41.4" height="208" class="area-alvo"/><path d="M433.6,232.0V109.8Q433.6,105.8 437.6,105.8H453.6Q457.6,105.8 457.6,109.8V232.0Z" class="marca"/></g><text x="445.6" y="250.0" class="eixo" text-anchor="middle">19h</text><g class="alvo" data-dica="20h às 21h
+10,4 pedidos por dia"><rect x="466.3" y="24" width="41.4" height="208" class="area-alvo"/><path d="M475.0,232.0V92.4Q475.0,88.4 479.0,88.4H495.0Q499.0,88.4 499.0,92.4V232.0Z" class="marca"/></g><text x="487.0" y="250.0" class="eixo" text-anchor="middle">20h</text><text x="487.0" y="80.4" class="valor" text-anchor="middle">10,4</text><g class="alvo" data-dica="21h às 22h
+7,4 pedidos por dia"><rect x="507.7" y="24" width="41.4" height="208" class="area-alvo"/><path d="M516.4,232.0V133.5Q516.4,129.5 520.4,129.5H536.4Q540.4,129.5 540.4,133.5V232.0Z" class="marca"/></g><text x="528.4" y="250.0" class="eixo" text-anchor="middle">21h</text><g class="alvo" data-dica="22h às 23h
+3,1 pedidos por dia"><rect x="549.1" y="24" width="41.4" height="208" class="area-alvo"/><path d="M557.9,232.0V192.7Q557.9,188.7 561.9,188.7H577.9Q581.9,188.7 581.9,192.7V232.0Z" class="marca"/></g><text x="569.9" y="250.0" class="eixo" text-anchor="middle">22h</text><g class="alvo" data-dica="23h às 24h
+1,6 pedidos por dia"><rect x="590.6" y="24" width="41.4" height="208" class="area-alvo"/><path d="M599.3,232.0V213.4Q599.3,209.4 603.3,209.4H619.3Q623.3,209.4 623.3,213.4V232.0Z" class="marca"/></g><text x="611.3" y="250.0" class="eixo" text-anchor="middle">23h</text></svg><details><summary>Ver tabela</summary><table><tr><th>Horário</th><th>Pedidos por dia</th></tr><tr><td>10h</td><td>1,0</td></tr><tr><td>11h</td><td>3,3</td></tr><tr><td>12h</td><td>7,5</td></tr><tr><td>13h</td><td>5,8</td></tr><tr><td>14h</td><td>2,6</td></tr><tr><td>15h</td><td>1,8</td></tr><tr><td>16h</td><td>1,5</td></tr><tr><td>17h</td><td>2,6</td></tr><tr><td>18h</td><td>4,7</td></tr><tr><td>19h</td><td>9,1</td></tr><tr><td>20h</td><td>10,4</td></tr><tr><td>21h</td><td>7,4</td></tr><tr><td>22h</td><td>3,1</td></tr><tr><td>23h</td><td>1,6</td></tr></table></details></section><section class="cartao"><h3>Pedidos por dia da semana</h3><p class="sub">Média de pedidos em cada dia</p><svg viewBox="0 0 640 260" role="img" aria-label="Média de pedidos por dia da semana"><line x1="52" x2="632" y1="232.0" y2="232.0" class="base"/><text x="44.0" y="236.0" class="eixo" text-anchor="end">0</text><line x1="52" x2="632" y1="180.0" y2="180.0" class="grade"/><text x="44.0" y="184.0" class="eixo" text-anchor="end">25</text><line x1="52" x2="632" y1="128.0" y2="128.0" class="grade"/><text x="44.0" y="132.0" class="eixo" text-anchor="end">50</text><line x1="52" x2="632" y1="76.0" y2="76.0" class="grade"/><text x="44.0" y="80.0" class="eixo" text-anchor="end">75</text><line x1="52" x2="632" y1="24.0" y2="24.0" class="grade"/><text x="44.0" y="28.0" class="eixo" text-anchor="end">100</text><g class="alvo" data-dica="segunda
+53 pedidos em média"><rect x="52.0" y="24" width="82.9" height="208" class="area-alvo"/><path d="M81.4,232.0V125.4Q81.4,121.4 85.4,121.4H101.4Q105.4,121.4 105.4,125.4V232.0Z" class="marca"/></g><text x="93.4" y="250.0" class="eixo" text-anchor="middle">seg</text><g class="alvo" data-dica="terça
+40 pedidos em média"><rect x="134.9" y="24" width="82.9" height="208" class="area-alvo"/><path d="M164.3,232.0V153.1Q164.3,149.1 168.3,149.1H184.3Q188.3,149.1 188.3,153.1V232.0Z" class="marca"/></g><text x="176.3" y="250.0" class="eixo" text-anchor="middle">ter</text><g class="alvo" data-dica="quarta
+52 pedidos em média"><rect x="217.7" y="24" width="82.9" height="208" class="area-alvo"/><path d="M247.1,232.0V127.2Q247.1,123.2 251.1,123.2H267.1Q271.1,123.2 271.1,127.2V232.0Z" class="marca"/></g><text x="259.1" y="250.0" class="eixo" text-anchor="middle">qua</text><g class="alvo" data-dica="quinta
+57 pedidos em média"><rect x="300.6" y="24" width="82.9" height="208" class="area-alvo"/><path d="M330.0,232.0V116.6Q330.0,112.6 334.0,112.6H350.0Q354.0,112.6 354.0,116.6V232.0Z" class="marca"/></g><text x="342.0" y="250.0" class="eixo" text-anchor="middle">qui</text><g class="alvo" data-dica="sexta
+73 pedidos em média"><rect x="383.4" y="24" width="82.9" height="208" class="area-alvo"/><path d="M412.9,232.0V83.8Q412.9,79.8 416.9,79.8H432.9Q436.9,79.8 436.9,83.8V232.0Z" class="marca"/></g><text x="424.9" y="250.0" class="eixo" text-anchor="middle">sex</text><g class="alvo" data-dica="sábado
+83 pedidos em média"><rect x="466.3" y="24" width="82.9" height="208" class="area-alvo"/><path d="M495.7,232.0V63.4Q495.7,59.4 499.7,59.4H515.7Q519.7,59.4 519.7,63.4V232.0Z" class="marca"/></g><text x="507.7" y="250.0" class="eixo" text-anchor="middle">sáb</text><text x="507.7" y="51.4" class="valor" text-anchor="middle">83</text><g class="alvo" data-dica="domingo
+78 pedidos em média"><rect x="549.1" y="24" width="82.9" height="208" class="area-alvo"/><path d="M578.6,232.0V74.2Q578.6,70.2 582.6,70.2H598.6Q602.6,70.2 602.6,74.2V232.0Z" class="marca"/></g><text x="590.6" y="250.0" class="eixo" text-anchor="middle">dom</text></svg><details><summary>Ver tabela</summary><table><tr><th>Dia</th><th>Pedidos por dia</th></tr><tr><td>segunda</td><td>53</td></tr><tr><td>terça</td><td>40</td></tr><tr><td>quarta</td><td>52</td></tr><tr><td>quinta</td><td>57</td></tr><tr><td>sexta</td><td>73</td></tr><tr><td>sábado</td><td>83</td></tr><tr><td>domingo</td><td>78</td></tr></table></details></section><section class="cartao"><h3>Faturamento por categoria</h3><p class="sub">Total do período, da maior para a menor</p><svg viewBox="0 0 640 268" role="img" aria-label="Faturamento por categoria de restaurante"><line x1="112" x2="112" y1="8" y2="260" class="base"/><g class="alvo" data-dica="Pizza
+R$ 80.557,93 (29,4% do total)"><rect x="0" y="8" width="640" height="36" class="area-alvo"/><path d="M112.0,17.0H541.9Q545.9,17.0 545.9,21.0V31.0Q545.9,35.0 541.9,35.0H112.0Z" class="marca"/></g><text x="102.0" y="30.0" class="rotulo" text-anchor="end">Pizza</text><text x="551.9" y="30.0" class="valor" text-anchor="start">R$ 80,6 mil</text><g class="alvo" data-dica="Lanches
+R$ 65.216,92 (23,8% do total)"><rect x="0" y="44" width="640" height="36" class="area-alvo"/><path d="M112.0,53.0H459.3Q463.3,53.0 463.3,57.0V67.0Q463.3,71.0 459.3,71.0H112.0Z" class="marca"/></g><text x="102.0" y="66.0" class="rotulo" text-anchor="end">Lanches</text><text x="469.3" y="66.0" class="valor" text-anchor="start">R$ 65,2 mil</text><g class="alvo" data-dica="Japonesa
+R$ 59.510,40 (21,7% do total)"><rect x="0" y="80" width="640" height="36" class="area-alvo"/><path d="M112.0,89.0H428.5Q432.5,89.0 432.5,93.0V103.0Q432.5,107.0 428.5,107.0H112.0Z" class="marca"/></g><text x="102.0" y="102.0" class="rotulo" text-anchor="end">Japonesa</text><text x="438.5" y="102.0" class="valor" text-anchor="start">R$ 59,5 mil</text><g class="alvo" data-dica="Brasileira
+R$ 34.500,81 (12,6% do total)"><rect x="0" y="116" width="640" height="36" class="area-alvo"/><path d="M112.0,125.0H293.8Q297.8,125.0 297.8,129.0V139.0Q297.8,143.0 293.8,143.0H112.0Z" class="marca"/></g><text x="102.0" y="138.0" class="rotulo" text-anchor="end">Brasileira</text><text x="303.8" y="138.0" class="valor" text-anchor="start">R$ 34,5 mil</text><g class="alvo" data-dica="Saudável
+R$ 13.172,17 (4,8% do total)"><rect x="0" y="152" width="640" height="36" class="area-alvo"/><path d="M112.0,161.0H178.9Q182.9,161.0 182.9,165.0V175.0Q182.9,179.0 178.9,179.0H112.0Z" class="marca"/></g><text x="102.0" y="174.0" class="rotulo" text-anchor="end">Saudável</text><text x="188.9" y="174.0" class="valor" text-anchor="start">R$ 13,2 mil</text><g class="alvo" data-dica="Açaí
+R$ 12.170,50 (4,4% do total)"><rect x="0" y="188" width="640" height="36" class="area-alvo"/><path d="M112.0,197.0H173.6Q177.6,197.0 177.6,201.0V211.0Q177.6,215.0 173.6,215.0H112.0Z" class="marca"/></g><text x="102.0" y="210.0" class="rotulo" text-anchor="end">Açaí</text><text x="183.6" y="210.0" class="valor" text-anchor="start">R$ 12,2 mil</text><g class="alvo" data-dica="Doces
+R$ 8.942,45 (3,3% do total)"><rect x="0" y="224" width="640" height="36" class="area-alvo"/><path d="M112.0,233.0H156.2Q160.2,233.0 160.2,237.0V247.0Q160.2,251.0 156.2,251.0H112.0Z" class="marca"/></g><text x="102.0" y="246.0" class="rotulo" text-anchor="end">Doces</text><text x="166.2" y="246.0" class="valor" text-anchor="start">R$ 8,9 mil</text></svg><details><summary>Ver tabela</summary><table><tr><th>Categoria</th><th>Faturamento</th><th>Participação</th></tr><tr><td>Pizza</td><td>R$ 80.557,93</td><td>29,4%</td></tr><tr><td>Lanches</td><td>R$ 65.216,92</td><td>23,8%</td></tr><tr><td>Japonesa</td><td>R$ 59.510,40</td><td>21,7%</td></tr><tr><td>Brasileira</td><td>R$ 34.500,81</td><td>12,6%</td></tr><tr><td>Saudável</td><td>R$ 13.172,17</td><td>4,8%</td></tr><tr><td>Açaí</td><td>R$ 12.170,50</td><td>4,4%</td></tr><tr><td>Doces</td><td>R$ 8.942,45</td><td>3,3%</td></tr></table></details></section><section class="cartao"><h3>Tempo médio de entrega por bairro</h3><p class="sub">A linha marca a meta de 45 minutos</p><svg viewBox="0 0 640 252" role="img" aria-label="Tempo médio de entrega por bairro"><line x1="112" x2="112" y1="8" y2="224" class="base"/><g class="alvo" data-dica="Alto da Serra
+53,4 min em média
+79,1% atrasados · 13,3% cancelados"><rect x="0" y="8" width="640" height="36" class="area-alvo"/><path d="M112.0,17.0H541.9Q545.9,17.0 545.9,21.0V31.0Q545.9,35.0 541.9,35.0H112.0Z" class="marca"/></g><text x="102.0" y="30.0" class="rotulo" text-anchor="end">Alto da Serra</text><text x="551.9" y="30.0" class="valor" text-anchor="start">53 min</text><g class="alvo" data-dica="Parque Sul
+44,4 min em média
+46,1% atrasados · 4,1% cancelados"><rect x="0" y="44" width="640" height="36" class="area-alvo"/><path d="M112.0,53.0H468.8Q472.8,53.0 472.8,57.0V67.0Q472.8,71.0 468.8,71.0H112.0Z" class="marca"/></g><text x="102.0" y="66.0" class="rotulo" text-anchor="end">Parque Sul</text><text x="478.8" y="66.0" class="valor" text-anchor="start">44 min</text><g class="alvo" data-dica="Jardim Norte
+41,7 min em média
+32,6% atrasados · 6,2% cancelados"><rect x="0" y="80" width="640" height="36" class="area-alvo"/><path d="M112.0,89.0H446.4Q450.4,89.0 450.4,93.0V103.0Q450.4,107.0 446.4,107.0H112.0Z" class="marca"/></g><text x="102.0" y="102.0" class="rotulo" text-anchor="end">Jardim Norte</text><text x="456.4" y="102.0" class="valor" text-anchor="start">42 min</text><g class="alvo" data-dica="Vila Nova
+39,0 min em média
+22,4% atrasados · 6,2% cancelados"><rect x="0" y="116" width="640" height="36" class="area-alvo"/><path d="M112.0,125.0H424.5Q428.5,125.0 428.5,129.0V139.0Q428.5,143.0 424.5,143.0H112.0Z" class="marca"/></g><text x="102.0" y="138.0" class="rotulo" text-anchor="end">Vila Nova</text><text x="434.5" y="138.0" class="valor" text-anchor="start">39 min</text><g class="alvo" data-dica="Bela Vista
+36,1 min em média
+14,7% atrasados · 4,4% cancelados"><rect x="0" y="152" width="640" height="36" class="area-alvo"/><path d="M112.0,161.0H401.3Q405.3,161.0 405.3,165.0V175.0Q405.3,179.0 401.3,179.0H112.0Z" class="marca"/></g><text x="102.0" y="174.0" class="rotulo" text-anchor="end">Bela Vista</text><text x="411.3" y="174.0" class="valor" text-anchor="start">36 min</text><g class="alvo" data-dica="Centro
+32,5 min em média
+7,7% atrasados · 2,6% cancelados"><rect x="0" y="188" width="640" height="36" class="area-alvo"/><path d="M112.0,197.0H371.9Q375.9,197.0 375.9,201.0V211.0Q375.9,215.0 371.9,215.0H112.0Z" class="marca"/></g><text x="102.0" y="210.0" class="rotulo" text-anchor="end">Centro</text><text x="381.9" y="210.0" class="valor" text-anchor="start">32 min</text><line x1="477.5" x2="477.5" y1="8" y2="228" class="referencia"/><text x="477.5" y="244.0" class="eixo" text-anchor="middle">Meta: 45 min</text></svg><details><summary>Ver tabela</summary><table><tr><th>Bairro</th><th>Tempo médio</th><th>Atrasados</th><th>Cancelados</th></tr><tr><td>Alto da Serra</td><td>53,4 min</td><td>79,1%</td><td>13,3%</td></tr><tr><td>Parque Sul</td><td>44,4 min</td><td>46,1%</td><td>4,1%</td></tr><tr><td>Jardim Norte</td><td>41,7 min</td><td>32,6%</td><td>6,2%</td></tr><tr><td>Vila Nova</td><td>39,0 min</td><td>22,4%</td><td>6,2%</td></tr><tr><td>Bela Vista</td><td>36,1 min</td><td>14,7%</td><td>4,4%</td></tr><tr><td>Centro</td><td>32,5 min</td><td>7,7%</td><td>2,6%</td></tr></table></details></section><section class="cartao"><h3>Nota do cliente por tempo de entrega</h3><p class="sub">Nota média (de 1 a 5) conforme a demora</p><svg viewBox="0 0 640 160" role="img" aria-label="Nota média por faixa de tempo de entrega"><line x1="112" x2="112" y1="8" y2="152" class="base"/><g class="alvo" data-dica="Entrega até 30 min
+nota 4,35 (724 avaliações)"><rect x="0" y="8" width="640" height="36" class="area-alvo"/><path d="M112.0,17.0H541.9Q545.9,17.0 545.9,21.0V31.0Q545.9,35.0 541.9,35.0H112.0Z" class="marca"/></g><text x="102.0" y="30.0" class="rotulo" text-anchor="end">até 30 min</text><text x="551.9" y="30.0" class="valor" text-anchor="start">4,4</text><g class="alvo" data-dica="Entrega 31 a 45 min
+nota 4,33 (1.672 avaliações)"><rect x="0" y="44" width="640" height="36" class="area-alvo"/><path d="M112.0,53.0H539.3Q543.3,53.0 543.3,57.0V67.0Q543.3,71.0 539.3,71.0H112.0Z" class="marca"/></g><text x="102.0" y="66.0" class="rotulo" text-anchor="end">31 a 45 min</text><text x="549.3" y="66.0" class="valor" text-anchor="start">4,3</text><g class="alvo" data-dica="Entrega 46 a 60 min
+nota 3,83 (770 avaliações)"><rect x="0" y="80" width="640" height="36" class="area-alvo"/><path d="M112.0,89.0H489.5Q493.5,89.0 493.5,93.0V103.0Q493.5,107.0 489.5,107.0H112.0Z" class="marca"/></g><text x="102.0" y="102.0" class="rotulo" text-anchor="end">46 a 60 min</text><text x="499.5" y="102.0" class="valor" text-anchor="start">3,8</text><g class="alvo" data-dica="Entrega mais de 60 min
+nota 2,46 (96 avaliações)"><rect x="0" y="116" width="640" height="36" class="area-alvo"/><path d="M112.0,125.0H352.9Q356.9,125.0 356.9,129.0V139.0Q356.9,143.0 352.9,143.0H112.0Z" class="marca"/></g><text x="102.0" y="138.0" class="rotulo" text-anchor="end">mais de 60 min</text><text x="362.9" y="138.0" class="valor" text-anchor="start">2,5</text></svg><details><summary>Ver tabela</summary><table><tr><th>Tempo de entrega</th><th>Nota média</th><th>Avaliações</th></tr><tr><td>até 30 min</td><td>4,35</td><td>724</td></tr><tr><td>31 a 45 min</td><td>4,33</td><td>1.672</td></tr><tr><td>46 a 60 min</td><td>3,83</td><td>770</td></tr><tr><td>mais de 60 min</td><td>2,46</td><td>96</td></tr></table></details></section></div>
+
+  <footer>Rangô é um app de delivery fictício. Dados gerados por gerar_dados.py.</footer>
+</main>
+<div id="dica" hidden></div>
+<script>
+const dica = document.getElementById('dica');
+function mostrar(evento, texto) {
+  dica.textContent = texto;
+  dica.hidden = false;
+  const x = Math.min(evento.clientX + 14, window.innerWidth - dica.offsetWidth - 8);
+  dica.style.left = x + 'px';
+  dica.style.top = (evento.clientY + 14) + 'px';
+}
+document.querySelectorAll('[data-dica]').forEach(el => {
+  el.addEventListener('pointermove', e => mostrar(e, el.dataset.dica));
+  el.addEventListener('pointerleave', () => { dica.hidden = true; });
+});
+document.querySelectorAll('.alvo-linha').forEach(el => {
+  const svg = el.ownerSVGElement, guia = svg.querySelector('.guia'), ponto = svg.querySelector('.ponto-guia');
+  el.addEventListener('pointerenter', () => {
+    guia.setAttribute('x1', el.dataset.x); guia.setAttribute('x2', el.dataset.x);
+    ponto.setAttribute('cx', el.dataset.x); ponto.setAttribute('cy', el.dataset.y);
+    guia.setAttribute('visibility', 'visible'); ponto.setAttribute('visibility', 'visible');
+  });
+  el.addEventListener('pointerleave', () => {
+    guia.setAttribute('visibility', 'hidden'); ponto.setAttribute('visibility', 'hidden');
+  });
+});
+</script>
+</body>
+</html>
